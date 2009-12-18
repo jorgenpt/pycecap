@@ -20,16 +20,26 @@ import sys
 
 class Client(object):
     def __init__(self):
-        self._pending_commands = {}
         self._next_tag = 1
+
+        self._events = []
+        self._pending_commands = {}
         self._event_handlers = {}
         self._state_handlers = {}
+
+        # Default handlers to update self._{gateways,networks,presences,channels}.
         self._reply_handlers = {
             'network list': self.network_list,
             'gateway list': self.gateway_list,
             'presence list': self.presence_list,
             'channel list': self.channel_list
         }
+
+        # No state until we get the first "foo list" replies.
+        self._gateways = {}
+        self._networks = {}
+        self._presences = {}
+        self._channels = {}
 
     def presend(self, object_or_command, params=None):
         if isinstance(object_or_command, basestr):
@@ -42,6 +52,10 @@ class Client(object):
         self._pending_commands[command.tag] = command
 
         return command
+
+    def fakesend(self, command):
+        command = protocol.Command(command)
+        self._pending_commands[command.tag] = command
 
     def parse(self, message):
         if message.startswith('*'):
@@ -71,23 +85,23 @@ class Client(object):
     def network_list(self, command):
         self._networks = {}
         for reply in command.replies:
-            if reply.command == r.MORE:
+            if reply.command == reply.MORE:
                 self._networks[reply.params['network']] = state.Network(reply.params)
 
     def gateway_list(self, command):
         self._gateways = []
         for reply in command.replies:
-            if reply.command == r.MORE:
+            if reply.command == reply.MORE:
                 self._gateways.append(state.Gateway(reply.params))
 
     def presence_list(self, command):
         self._presences = []
         for reply in command.replies:
-            if reply.command == r.MORE:
+            if reply.command == reply.MORE:
                 self._presences.append(state.Presence(reply.params))
 
     def channel_list(self, command):
         self._channels = []
         for reply in command.replies:
-            if reply.command == r.MORE:
+            if reply.command == reply.MORE:
                 self._channels.append(state.Channel(reply.params))
