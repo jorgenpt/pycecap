@@ -21,6 +21,7 @@ class Message(object):
     def __init__(self):
         self.message = None
         self.command = ''
+        self.tag = ''
         self.params = {}
 
     def parse(self, message):
@@ -31,7 +32,7 @@ class Message(object):
         params = filter(len, parts[2:])
 
         self.message = message
-        self.tag, self.command = parts[0:2]
+        self.tag, self.command = parts[:2]
         self.params = {}
 
         for param in params:
@@ -59,9 +60,16 @@ class Message(object):
 
         return unesc
 
+    def __repr__(self):
+        className = self.__class__.__name__
+        if not self.command:
+            return '%s(message=%r)' % (className, self.message)
+        else:
+            return '%s(command=%r, tag=%r, params=%r)' % (className, self.command, self.tag, self.params)
+
 class Command(Message):
     def __init__(self, message_or_tag, command=None, params=None):
-        super(Reply, self).__init__()
+        super(Command, self).__init__()
 
         self.replies = []
 
