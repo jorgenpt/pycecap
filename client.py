@@ -17,7 +17,6 @@ import state
 
 import sys
 
-
 class Client(object):
     def __init__(self):
         self._next_tag = 1
@@ -93,9 +92,12 @@ class Client(object):
         for reply in command.replies:
             if reply.command == reply.MORE:
                 network = reply.params['network']
-                if network not in self._networks:
-                    self._networks[network] = [None, []] # FIXME: Use a custom structure, or make gateways a field in networks?
-                self._networks[network][0] = state.Network(reply.params)
+
+                gateways = []
+                if network in self._networks:
+                    gateways = self._networks[network].gateways
+
+                self._networks[network] = state.Network(reply.params, gateways)
 
     def network_add(self, event):
         print "network_add(%r)" % event

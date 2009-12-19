@@ -12,22 +12,11 @@
 # IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
-class StateObject(object):
-    def __init__(self, params):
-        self.__dict__.update(params)
-
-class Network(StateObject):
-    def __init__(self, params):
+class Network(dict):
+    def __init__(self, params={}, gateways=None):
         super(Network, self).__init__(params)
 
-class Gateway(StateObject):
-    def __init__(self, params):
-        super(Gateway, self).__init__(params)
-
-class Presence(StateObject):
-    def __init__(self, params):
-        super(Presence, self).__init__(params)
-
-class Channel(StateObject):
-    def __init__(self, params):
-        super(Channel, self).__init__(params)
+        if gateways is None:
+            self.gateways = []
+        else:
+            self.gateways = gateways
