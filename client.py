@@ -25,7 +25,6 @@ class Client(object):
         self._events = []
         self._pending_commands = {}
         self._event_handlers = {}
-        self._state_handlers = {}
 
         # Default handlers to update self._{gateways,networks,presences,channels}.
         self._reply_handlers = {
@@ -35,11 +34,17 @@ class Client(object):
             'channel list': self.channel_list
         }
 
-        # No state until we get the first "foo list" replies.
-        self._gateways = {}
+        self._state_handlers = {
+            'network_init': self.network_add,
+            'gateway_init': self.gateway_add,
+            'presence_init': self.presence_add,
+            'channel_init': self.channel_add
+        }
+
+        # Blank state.
         self._networks = {}
-        self._presences = {}
-        self._channels = {}
+        self._presences = []
+        self._channels = []
 
     def presend(self, object_or_command, params=None):
         if isinstance(object_or_command, basestr):
@@ -83,25 +88,59 @@ class Client(object):
                 del self._pending_commands[reply.tag]
 
     def network_list(self, command):
+        print "network_list(%r)" % command
         self._networks = {}
         for reply in command.replies:
             if reply.command == reply.MORE:
-                self._networks[reply.params['network']] = state.Network(reply.params)
+                network = reply.params['network']
+                if network not in self._networks:
+                    self._networks[network] = [None, []] # FIXME: Use a custom structure, or make gateways a field in networks?
+                self._networks[network][0] = state.Network(reply.params)
+
+    def network_add(self, event):
+        print "network_add(%r)" % event
+        network = event.params['network']
+        if network not in self._networks:
+            self._networks[network] = (None, [])
+        self._networks[network][0] = state.Network(event.params)
 
     def gateway_list(self, command):
+        print "gateway_list(%r)" % command
         self._gateways = []
+        for network in self._networks.iterkeys():
+            self._networks[network][1] = []
+
         for reply in command.replies:
             if reply.command == reply.MORE:
-                self._gateways.append(state.Gateway(reply.params))
+                self._networks[gateway.network][1].append(gateway)
+
+    def gateway_add(self, event):
+        print "gateway_add(%r)" % event
+        gateway = state.Gateway(event.params)
+
+        if gateway.network not in self._networks:
+            self._networks[gateway.network] = (None, [])
+        self._networks[gateway.network][1].append(gateway)
 
     def presence_list(self, command):
+        print "presence_list(%r)" % command
         self._presences = []
         for reply in command.replies:
             if reply.command == reply.MORE:
                 self._presences.append(state.Presence(reply.params))
 
+    def presence_add(self, event):
+        print "presence_add(%r)" % event
+        self._presences.append(state.Presence(event.params))
+
     def channel_list(self, command):
+        print "channel_list(%r)" % command
         self._channels = []
         for reply in command.replies:
             if reply.command == reply.MORE:
                 self._channels.append(state.Channel(reply.params))
+
+    def channel_add(self, event):
+        print "channel_add(%r)" % event
+        self._channels.append(state.Channel(event.params))
+
