@@ -29,7 +29,7 @@ def doWork(c, icecap, replay):
             elif line == 'quit' or line == 'exit':
                 return False
             else:
-                print >replay, '>%s' % line
+                print >>replay, '>%s' % line
                 try:
                     c.fakesend(line)
                     print '> %s' % line
@@ -37,7 +37,7 @@ def doWork(c, icecap, replay):
                 except client.protocol.InvalidMessageException:
                     print 'Invalid message'
         else:
-            print >replay, '<%s' % line
+            print >>replay, '<%s' % line
             print '< %s' % line
             c.parse(line)
 
