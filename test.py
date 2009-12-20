@@ -33,7 +33,7 @@ def doWork(c, icecap, replay):
                 try:
                     c.fakesend(line)
                     print '> %s' % line
-                    icecap.stdin.write(line)
+                    icecap.stdin.write(line + '\n')
                 except client.protocol.InvalidMessageException:
                     print 'Invalid message'
         else:
