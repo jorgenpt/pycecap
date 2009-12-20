@@ -42,7 +42,7 @@ class Message(object):
             if len(parts) > 1:
                 self.params[key] = self.unescape(parts[1])
             else:
-                self.params[key] = None
+                self.params[key] = True
 
     def unescape(self, s):
         unesc = ''
