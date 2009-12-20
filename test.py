@@ -7,17 +7,39 @@
 import client
 from sys import stdin
 
+import select
 from pprint import pprint
+import subprocess
 
 c = client.Client()
+icecap = subprocess.Popen(['ssh', 'arach', 'icecapd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
-for line in stdin:
-    line = line.rstrip('\n\r')
-    dir, message = line[:5], line[5:]
+while True:
+    rlist = [stdin, icecap.stdout]
+    try:
+        ready, _, _ = select.select(rlist, [], [])
+    except select.error:
+        break
+    except KeyboardInterrupt:
+        break
 
-    if dir == 'recv:':
-        c.parse(message)
-    else:
-        c.fakesend(message)
+    for r in ready:
+        line = r.readline().rstrip('\n\r')
+        if r == stdin:
+            if line == 'dump':
+                pprint(c.__dict__)
+            elif line == 'quit' or line == 'exit':
+                break
+            else:
+                try:
+                    c.fakesend(line)
+                    print '> %s' % line
+                    icecap.stdin.write(line)
+                except client.protocol.InvalidMessageException:
+                    print 'Invalid message'
+        else:
+            print '< %s' % line
+            c.parse(line)
 
+icecap.terminate()
 pprint(c.__dict__)
