@@ -5,23 +5,21 @@
 # up like they should be.
 
 import client
+
+from os import getpid
+from pprint import pprint
+import select
+import subprocess
 from sys import stdin
 
-import select
-from pprint import pprint
-import subprocess
-
-c = client.Client()
-icecap = subprocess.Popen(['ssh', 'arach', 'icecapd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-
-while True:
+def doWork(c, icecap, replay):
     rlist = [stdin, icecap.stdout]
     try:
         ready, _, _ = select.select(rlist, [], [])
     except select.error:
-        break
+        return False
     except KeyboardInterrupt:
-        break
+        return False
 
     for r in ready:
         line = r.readline().rstrip('\n\r')
@@ -29,8 +27,9 @@ while True:
             if line == 'dump':
                 pprint(c.__dict__)
             elif line == 'quit' or line == 'exit':
-                break
+                return False
             else:
+                print >replay, '>%s' % line
                 try:
                     c.fakesend(line)
                     print '> %s' % line
@@ -38,8 +37,23 @@ while True:
                 except client.protocol.InvalidMessageException:
                     print 'Invalid message'
         else:
+            print >replay, '<%s' % line
             print '< %s' % line
             c.parse(line)
 
-icecap.terminate()
-pprint(c.__dict__)
+    return True
+
+
+c = client.Client()
+icecap = subprocess.Popen(['ssh', 'arach', 'icecapd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+replay = open('replay-%i.log' % getpid(), 'w')
+
+try:
+    while doWork(c, icecap, replay):
+        pass
+except Exception, e:
+    print e
+finally:
+    replay.close()
+    icecap.terminate()
+    pprint(c.__dict__)
