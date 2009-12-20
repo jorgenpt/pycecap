@@ -102,9 +102,12 @@ class Client(object):
     def network_add(self, event):
         print "network_add(%r)" % event
         network = event.params['network']
-        if network not in self._networks:
-            self._networks[network] = (None, [])
-        self._networks[network][0] = state.Network(event.params)
+
+        gateways = []
+        if network in self._networks:
+            gateways = self._networks[network].gateways
+
+        self._networks[network] = state.Network(event.params, gateways)
 
     def gateway_list(self, command):
         print "gateway_list(%r)" % command
@@ -118,31 +121,30 @@ class Client(object):
 
     def gateway_add(self, event):
         print "gateway_add(%r)" % event
-        gateway = state.Gateway(event.params)
-
-        if gateway.network not in self._networks:
-            self._networks[gateway.network] = (None, [])
-        self._networks[gateway.network][1].append(gateway)
+        gateway = event.params
+        if gateway['network'] not in self._networks:
+            self._networks[gateway['network']] = state.Network()
+        self._networks[gateway['network']].gateways.append(gateway)
 
     def presence_list(self, command):
         print "presence_list(%r)" % command
         self._presences = []
         for reply in command.replies:
             if reply.command == reply.MORE:
-                self._presences.append(state.Presence(reply.params))
+                self._presences.append(reply.params)
 
     def presence_add(self, event):
         print "presence_add(%r)" % event
-        self._presences.append(state.Presence(event.params))
+        self._presences.append(event.params)
 
     def channel_list(self, command):
         print "channel_list(%r)" % command
         self._channels = []
         for reply in command.replies:
             if reply.command == reply.MORE:
-                self._channels.append(state.Channel(reply.params))
+                self._channels.append(reply.params)
 
     def channel_add(self, event):
         print "channel_add(%r)" % event
-        self._channels.append(state.Channel(event.params))
+        self._channels.append(event.params)
 
