@@ -6,7 +6,7 @@
 
 import client
 
-from os import getpid
+import os
 from pprint import pprint
 import select
 import subprocess
@@ -46,7 +46,10 @@ def doWork(c, icecap, replay):
 
 c = client.Client()
 icecap = subprocess.Popen(['ssh', 'arach', 'icecapd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-replay = open('replay-%i.log' % getpid(), 'w')
+
+if not os.path.isdir('logs'):
+    os.mkdir('logs')
+replay = open('logs/replay-%i.log' % os.getpid(), 'w')
 
 try:
     while doWork(c, icecap, replay):

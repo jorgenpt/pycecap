@@ -1,2 +1,2 @@
 *.pyc
-replay-*.log
+logs/
