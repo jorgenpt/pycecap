@@ -38,8 +38,10 @@ class Client(object):
             'network_init': self.network_add,
             'gateway_init': self.gateway_add,
             'presence_init': self.presence_add,
+            'presence_deinit': self.presence_remove,
             'channel_init': self.channel_add,
-            'channel_presence_init': self.channel_presence_add,
+            'channel_presence_added': self.channel_presence_add,
+            'channel_presence_removed': self.channel_presence_remove,
         }
 
         # Blank state.
@@ -60,9 +62,9 @@ class Client(object):
         if presence is None:
             return network
 
-        if presence not in network.presences:
-            network.presences[presence] = state.LocalPresence()
-        presence = network.presences[presence]
+        if presence not in network.local_presences:
+            network.local_presences[presence] = state.LocalPresence()
+        presence = network.local_presences[presence]
 
         if channel is None:
             return presence
@@ -139,13 +141,26 @@ class Client(object):
             if reply.command == reply.MORE:
                 network, presence = reply.params['network'], reply.params['mypresence']
                 network = self.get(network)
-                network.presences[presence] = state.LocalPresence(reply.params, network.presences.get(presence))
+                network.local_presences[presence] = state.LocalPresence(reply.params, network.local_presences.get(presence))
 
     def presence_add(self, event):
-        if event.get('own'):
-            network, presence = reply.params['network'], reply.params['presence']
-            network = self.get(network)
-            network.presences[presence] = state.LocalPresence(reply.params, network.presences.get(presence))
+        presence = event.params['presence']
+        network = self.get(event.params['network'])
+
+        local_presence = self.get(event.params)
+        local_presence.presences[presence] = event.params
+
+        if event.params.get('own'):
+            network.local_presences[presence] = state.LocalPresence(event.params, network.local_presences.get(presence))
+
+    def presence_remove(self, event):
+        presence = event.params['presence']
+        network = self.get(event.params['network'])
+        local_presence = self.get(event.params)
+        local_presence.presences.pop(presence, None)
+
+        if event.params.get('own'):
+            network.local_presences.pop(presence, None)
 
     def channel_list(self, command):
         presence = self.get(command.params)
@@ -153,7 +168,7 @@ class Client(object):
 
         for reply in command.replies:
             if reply.command == reply.MORE:
-                channel = reply['channel']
+                channel = reply.params['channel']
                 new_channels[channel] = state.Channel(reply.params, presence.channels.get(channel))
 
         presence.channels = new_channels
@@ -166,11 +181,15 @@ class Client(object):
 
     def channel_presence_list(self, command):
         channel = self.get(command.params)
-        channel.presences = []
+        channel.presences = {}
         for reply in command.replies:
             if reply.command == reply.MORE:
-                channel.presences.append(reply.params)
+                channel.presences[reply.params['presence']] = reply.params
 
     def channel_presence_add(self, event):
         channel = self.get(event.params)
-        channel.presences.append(event.params)
+        channel.presences[event.params['presence']] = event.params
+
+    def channel_presence_remove(self, event):
+        channel = self.get(event.params)
+        channel.presences.pop(event.params['presence'], None)
