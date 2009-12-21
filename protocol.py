@@ -67,9 +67,9 @@ class Message(object):
         params = []
         for (k, v) in self.params.iteritems():
             if v is True:
-                params << escape(k)
+                params.append(escape(k))
             else:
-                params << '%s=%s' % (escape(k), escape(v))
+                params.append('%s=%s' % (escape(k), escape(v)))
         return '%s;%s;%s' % (escape(self.tag), escape(self.command), ';'.join(params))
 
     def __repr__(self):
