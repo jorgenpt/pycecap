@@ -84,7 +84,8 @@ class Client(object):
 
     def network_list(self, command):
         print "network_list(%r)" % command
-        self._networks = {}
+
+        new_networks = {}
         for reply in command.replies:
             if reply.command == reply.MORE:
                 network = reply.params['network']
@@ -93,7 +94,9 @@ class Client(object):
                 if network in self._networks:
                     gateways = self._networks[network].gateways
 
-                self._networks[network] = state.Network(reply.params, gateways)
+                new_networks[network] = state.Network(reply.params, gateways)
+
+        self._networks = new_networks
 
     def network_add(self, event):
         print "network_add(%r)" % event
@@ -107,13 +110,15 @@ class Client(object):
 
     def gateway_list(self, command):
         print "gateway_list(%r)" % command
-        self._gateways = []
         for network in self._networks.iterkeys():
-            self._networks[network][1] = []
+            self._networks[network].gateways = []
 
         for reply in command.replies:
             if reply.command == reply.MORE:
-                self._networks[gateway.network][1].append(gateway)
+                gateway = reply.params
+                if gateway['network'] not in self._networks:
+                    self._networks[gateway['network']] = state.Network()
+                self._networks[gateway['network']].gateways.append(gateway)
 
     def gateway_add(self, event):
         print "gateway_add(%r)" % event
