@@ -46,20 +46,16 @@ class Client(object):
         self._channels = []
 
     def presend(self, object_or_command, params=None):
-        if isinstance(object_or_command, basestr):
+        if isinstance(object_or_command, basestring):
             command = protocol.Command(str(self._next_tag), object_or_command, params)
         else:
             command = object_or_command
-            command.tag = self._next_tag
+            command.tag = str(self._next_tag)
 
         self._next_tag += 1
         self._pending_commands[command.tag] = command
 
         return command
-
-    def fakesend(self, command):
-        command = protocol.Command(command)
-        self._pending_commands[command.tag] = command
 
     def parse(self, message):
         if message.startswith('*'):
