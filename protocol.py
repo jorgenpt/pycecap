@@ -23,7 +23,7 @@ def unescape(s):
     escape = False
     for c in str(s):
         if escape:
-            c = self.ESCAPE_LOOKUP.get(c, c)
+            c = ESCAPE_LOOKUP.get(c, c)
         else:
             escape = (c == '\\')
             if escape:
