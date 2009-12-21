@@ -19,6 +19,7 @@ import sys
 
 class Client(object):
     def __init__(self):
+        self.unhandled = (set(), set())
         self._next_tag = 1
 
         self._events = []
@@ -92,6 +93,8 @@ class Client(object):
 
             if event.command in self._state_handlers:
                 self._state_handlers[event.command](event)
+            else:
+                self.unhandled[0].add(event.command)
 
             if event.command in self._event_handlers:
                 self._event_handlers[event.command](event)
@@ -108,6 +111,8 @@ class Client(object):
             if reply.command == reply.OK:
                 if command.command in self._reply_handlers:
                     self._reply_handlers[command.command](command)
+                else:
+                    self.unhandled[1].add(command.command)
                 del self._pending_commands[reply.tag]
 
     def network_list(self, command):
