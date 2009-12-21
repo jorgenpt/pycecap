@@ -20,3 +20,6 @@ class Network(dict):
             self.gateways = []
         else:
             self.gateways = gateways
+
+    def __repr__(self):
+        return 'Network(%s, %r)' % (super(Network, self).__repr__(), self.gateways)
