@@ -17,6 +17,8 @@ for line in stdin:
     if dir == '<':
         c.parse(message)
     else:
-        c.presend(client.protocol.Command(message))
+        command = client.protocol.Command(message)
+        c._next_tag = int(command.tag)
+        c.presend(command)
 
 pprint(c.__dict__)
