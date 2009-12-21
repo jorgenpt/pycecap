@@ -22,4 +22,16 @@ class Network(dict):
             self.gateways = gateways
 
     def __repr__(self):
-        return 'Network(%s, %r)' % (super(Network, self).__repr__(), self.gateways)
+        return 'Network(params=%s, gateways=%r)' % (super(Network, self).__repr__(), self.gateways)
+
+class Channel(dict):
+    def __init__(self, params={}, presences=None):
+        super(Channel, self).__init__(params)
+
+        if presences is None:
+            self.presences = []
+        else:
+            self.presences = presences
+
+    def __repr__(self):
+        return 'Channel(params=%s, presences=%r)' % (super(Channel, self).__repr__(), self.presences)
