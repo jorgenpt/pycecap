@@ -18,13 +18,13 @@ class Network(dict):
 
         if old_network is None:
             self.gateways = []
-            self.presences = {}
+            self.local_presences = {}
         else:
             self.gateways = old_network.gateways
-            self.presences = old_network.presences
+            self.local_presences = old_network.local_presences
 
     def __repr__(self):
-        return 'Network(params=%s, gateways=%r, presences=%r)' % (super(Network, self).__repr__(), self.gateways, self.presences)
+        return 'Network(params=%s, gateways=%r, local_presences=%r)' % (super(Network, self).__repr__(), self.gateways, self.local_presences)
 
 class LocalPresence(dict):
     def __init__(self, params={}, old_presence=None):
@@ -32,18 +32,20 @@ class LocalPresence(dict):
 
         if old_presence is None:
             self.channels = {}
+            self.presences = {}
         else:
             self.channels = old_presence.channels
+            self.presences = old_presence.presences
 
     def __repr__(self):
-        return 'LocalPresence(params=%s, channels=%r)' % (super(LocalPresence, self).__repr__(), self.channels)
+        return 'LocalPresence(params=%s, channels=%r, presences=%r)' % (super(LocalPresence, self).__repr__(), self.channels, self.presences)
 
 class Channel(dict):
     def __init__(self, params={}, old_network=None):
         super(Channel, self).__init__(params)
 
         if old_network is None:
-            self.presences = []
+            self.presences = {}
         else:
             self.presences = old_network.presences
 
