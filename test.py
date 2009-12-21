@@ -31,11 +31,11 @@ def work(c, icecap, replay):
             elif line == 'quit' or line == 'exit':
                 return False
             else:
-                print >>replay, '>%s' % line
                 try:
-                    c.fakesend(line)
-                    print '> %s' % line
-                    icecap.stdin.write(line + '\n')
+                    command = c.presend(client.protocol.Command(line))
+                    print >>replay, '>%s' % command
+                    print '> %s' % command
+                    icecap.stdin.write(str(command) + '\n')
                 except client.protocol.InvalidMessageException:
                     print 'Invalid message'
         else:
@@ -57,8 +57,6 @@ replay = open(log_name, 'w')
 try:
     while work(c, icecap, replay):
         pass
-except Exception, e:
-    print e
 finally:
     replay.close()
     icecap.terminate()
