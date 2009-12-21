@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # vim: set fileencoding=utf-8 :
-# 
+#
 # pycecap
 # Copyright (c) 2009 Jørgen Tjernø <jorgenpt@gmail.com>
 #
@@ -12,42 +12,81 @@
 # IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
-class Network(dict):
-    def __init__(self, params={}, old_network=None):
-        super(Network, self).__init__(params)
+import weakref
 
-        if old_network is None:
-            self.gateways = []
-            self.local_presences = {}
+def remove_keys(d, keys):
+    keys = set(keys)
+    for k in keys:
+        if k in d:
+            del d[k]
+
+class Network(object):
+    def __init__(self, network, info, old_me=None):
+        self.network = network
+        self.info = info
+
+        if old_me is not None:
+            self.gateways = old_me.gateways
         else:
-            self.gateways = old_network.gateways
-            self.local_presences = old_network.local_presences
+            self.gateways = []
 
-    def __repr__(self):
-        return 'Network(params=%s, gateways=%r, local_presences=%r)' % (super(Network, self).__repr__(), self.gateways, self.local_presences)
+class Connection(object):
+    def __init__(self, network_or_dict, mypresence=None):
+        if mypresence is None:
+            self.network = network_or_dict.pop('network')
+            self.mypresence = network_or_dict.pop('mypresence')
+        else:
+            self.network = network_or_dict
+            self.mypresence = mypresence
 
-class LocalPresence(dict):
-    def __init__(self, params={}, old_presence=None):
-        super(LocalPresence, self).__init__(params)
+    def __hash__(self):
+        return hash((self.network, self.mypresence))
 
-        if old_presence is None:
+    def __cmp__(self, other):
+        if type(self) != type(other):
+            return cmp(type(self), type(other))
+        return cmp((self.network, self.mypresence), (self.network, other.mypresence))
+
+class Presence(object):
+    def __init__(self, local_presence, name, info, old_me=None):
+        self.local_presence = weakref.ref(local_presence)
+        self.name = name
+        self.info = info
+
+        if old_me is not None:
+            self.channels = old_me.channels
+        else:
+            self.channels = set()
+
+class LocalPresence(object):
+    def __init__(self, connection, info, old_me=None):
+        self.connection = connection
+        self.info = info
+
+        if old_me is not None:
+            self.channels = old_me.channels
+            self.presences = old_me.presences
+        else:
             self.channels = {}
             self.presences = {}
+
+    def get_channel(self, channel):
+        if channel not in self.channels:
+            self.channels[channel] = Channel(self, channel, {})
+        return self.channels[channel]
+
+    def get_presence(self, presence):
+        if presence not in self.presences:
+            self.presences[presence] = Presence(self, presence, {})
+        return self.presences[presence]
+
+class Channel(object):
+    def __init__(self, presence, name, info, old_me=None):
+        self.name = name
+        self.local_presence = weakref.ref(presence)
+        self.info = info
+
+        if old_me is not None:
+            self.users = old_me.users
         else:
-            self.channels = old_presence.channels
-            self.presences = old_presence.presences
-
-    def __repr__(self):
-        return 'LocalPresence(params=%s, channels=%r, presences=%r)' % (super(LocalPresence, self).__repr__(), self.channels, self.presences)
-
-class Channel(dict):
-    def __init__(self, params={}, old_network=None):
-        super(Channel, self).__init__(params)
-
-        if old_network is None:
-            self.presences = {}
-        else:
-            self.presences = old_network.presences
-
-    def __repr__(self):
-        return 'Channel(params=%s, presences=%r)' % (super(Channel, self).__repr__(), self.presences)
+            self.users = {}
