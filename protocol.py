@@ -15,9 +15,28 @@
 class InvalidMessageException(Exception):
     pass
 
-class Message(object):
-    ESCAPE_DICT = {'.': ';', 'r': "\r", 'n': "\n"}
+ESCAPE_LOOKUP = {'.': ';', 'r': "\r", 'n': "\n"}
 
+def unescape(s):
+    unesc = ''
+
+    escape = False
+    for c in str(s):
+        if escape:
+            c = self.ESCAPE_LOOKUP.get(c, c)
+        else:
+            escape = (c == '\\')
+            if escape:
+                c = ''
+
+        unesc += c
+
+    return unesc
+
+def escape(s):
+    return str(s).replace('\\', '\\\\').replace(';', '\\.').replace('\n', '\\n').replace('\r', '\\r')
+
+class Message(object):
     def __init__(self):
         self.message = None
         self.command = ''
@@ -40,25 +59,18 @@ class Message(object):
             key = parts[0]
 
             if len(parts) > 1:
-                self.params[key] = self.unescape(parts[1])
+                self.params[key] = unescape(parts[1])
             else:
                 self.params[key] = True
 
-    def unescape(self, s):
-        unesc = ''
-
-        escape = False
-        for c in s:
-            if escape:
-                c = self.ESCAPE_DICT.get(c, c)
+    def __str__(self):
+        params = []
+        for (k, v) in self.params.iteritems():
+            if v is True:
+                params << escape(k)
             else:
-                escape = (c == '\\')
-                if escape:
-                    c = ''
-
-            unesc += c
-
-        return unesc
+                params << '%s=%s' % (escape(k), escape(v))
+        return '%s;%s;%s' % (escape(self.tag), escape(self.command), ';'.join(params))
 
     def __repr__(self):
         className = self.__class__.__name__
