@@ -168,15 +168,20 @@ class Client(object):
             network.local_presences.pop(presence, None)
 
     def channel_list(self, command):
-        presence = self.get(command.params)
         new_channels = {}
 
         for reply in command.replies:
             if reply.command == reply.MORE:
-                channel = reply.params['channel']
-                new_channels[channel] = state.Channel(reply.params, presence.channels.get(channel))
+                presence = self.get(reply.params['network'], reply.params['mypresence'])
+                key = id(presence)
+                if key not in new_channels:
+                    new_channels[key] = (presence, {})
 
-        presence.channels = new_channels
+                channel = reply.params['channel']
+                new_channels[key][1][channel] = state.Channel(reply.params, presence.channels.get(channel))
+
+        for (key, (presence, channels)) in new_channels.iteritems():
+            presence.channels = channels
 
     def channel_add(self, event):
         network, presence, channel = event.params['network'], event.params['mypresence'], event.params['channel']
