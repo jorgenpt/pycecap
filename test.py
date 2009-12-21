@@ -25,6 +25,9 @@ def work(c, icecap, replay):
 
     for r in ready:
         line = r.readline().rstrip('\n\r')
+        if not line:
+            continue
+
         if r == stdin:
             if line == 'dump':
                 pprint(c.__dict__)

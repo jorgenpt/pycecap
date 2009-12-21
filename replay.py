@@ -11,6 +11,9 @@ for line in stdin:
     line = line.rstrip('\n\r')
     dir, message = line[:1], line[1:]
 
+    if not message:
+        continue
+
     if dir == '<':
         c.parse(message)
     else:
