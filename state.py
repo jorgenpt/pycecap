@@ -98,9 +98,9 @@ class Channel(LocalPresenceObject):
         super(Channel, self).__init__(local_presence, name, info)
 
         if old_me is not None:
-            self.users = old_me.users
+            self.presences = old_me.presences
         else:
-            self.users = {}
+            self.presences = {}
 
     def __repr__(self):
-        return 'Channel(%r, %r, %r, <users=%r>)' % (self.local_presence().connection, self.name, self.info, self.users)
+        return 'Channel(%r, %r, %r, <presences=%r>)' % (self.local_presence().connection, self.name, self.info, self.presences)

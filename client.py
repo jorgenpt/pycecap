@@ -208,8 +208,8 @@ class Client(object):
             for channel in presence_obj.channels:
                 channel_obj = local_presence.channels.get(channel)
                 if channel_obj:
-                    old_mode = channel_obj.users.pop(presence, '')
-                    channel_obj.users[new_presence] = old_mode
+                    old_mode = channel_obj.presences.pop(presence, '')
+                    channel_obj.presences[new_presence] = old_mode
 
             # Then finally, delete the old entry.
             del local_presence.presences[presence]
@@ -249,14 +249,14 @@ class Client(object):
         local_presence.channels[channel] = state.Channel(local_presence, channel, event.params, local_presence.channels.get(channel))
 
     def channel_remove(self, event):
-        # Remove a channel, if it exists, and remove any users presnece listed as being in it
+        # Remove a channel, if it exists, and remove any presences presnece listed as being in it
         local_presence = self.get_local_presence(event.params)
         channel = event.params.pop('channel')
 
         channel_obj = local_presence.channels.pop(channel, None)
 
         if channel_obj is not None:
-            for presence in channel_obj.users.iterkeys():
+            for presence in channel_obj.presences.iterkeys():
                 if presence in local_presence.presences:
                     local_presence.presences[presence].channels.pop(channel, None)
 
@@ -265,7 +265,7 @@ class Client(object):
         local_presence = self.get_local_presence(command.params)
         channel = local_presence.get_channel(command.params.pop('channel'))
 
-        old_presences = set(channel.users.iterkeys())
+        old_presences = set(channel.presences.iterkeys())
         channel.presences = {}
 
 
@@ -287,7 +287,7 @@ class Client(object):
         channel = event.params.pop('channel')
         presence = event.params.pop('presence')
 
-        local_presence.get_channel(channel).users[presence] = ''
+        local_presence.get_channel(channel).presences[presence] = ''
         local_presence.get_presence(presence).channels.add(channel)
 
     def channel_presence_remove(self, event):
@@ -296,5 +296,5 @@ class Client(object):
         channel = event.params.pop('channel')
         presence = event.params.pop('presence')
 
-        local_presence.get_channel(channel).users.pop(presence, None)
+        local_presence.get_channel(channel).presences.pop(presence, None)
         local_presence.get_presence(presence).channels.discard(channel)
