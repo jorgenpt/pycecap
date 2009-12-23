@@ -84,7 +84,7 @@ class Presence(object):
             self.channels = set()
 
     def __repr__(self):
-        return 'Presence(%r, %r, %r, <channels=%r>)' % (self.local_presence.connection, self.name, self.info, self.channels)
+        return 'Presence(%r, %r, %r, <channels=%r>)' % (self.local_presence().connection, self.name, self.info, self.channels)
 
 class Channel(object):
     def __init__(self, presence, name, info, old_me=None):
@@ -98,4 +98,4 @@ class Channel(object):
             self.users = {}
 
     def __repr__(self):
-        return 'Channel(%r, %r, %r, <users=%r>)' % (self.local_presence.connection, self.name, self.info, self.users)
+        return 'Channel(%r, %r, %r, <users=%r>)' % (self.local_presence().connection, self.name, self.info, self.users)
