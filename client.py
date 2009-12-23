@@ -187,7 +187,33 @@ class Client(object):
                     local_presence.channels[channel].pop(presence, None)
 
     def presence_changed(self, event):
-        pass # TODO
+        local_presence = self.get_local_presence(event.params)
+        presence = event.params.pop('presence')
+        presence_obj = local_presence.get_presence(presence)
+
+        # The name param in presence_changed means the user changed nick / name,
+        # and we need to update all references to the old name.
+        if 'name' in event.params:
+            new_presence = event.params.pop('name')
+            local_presence.presences[new_presence] = presence_obj
+
+            # For every channel the presence was in, update the references in the channel object.
+            for channel in presence_obj.channels:
+                channel_obj = local_presence.channels.get(channel)
+                if channel_obj:
+                    old_mode = channel_obj.users.pop(presence, '')
+                    channel_obj.users[new_presence] = old_mode
+
+            # Then finally, delete the old entry.
+            del local_presence.presences[presence]
+            presence = new_presence
+
+        # Otherwise, these are attributes where we just update the info-dict for the presence.
+        INFO_KEYS = ['address'] # TODO: More keys?
+        for key in INFO_KEYS:
+            if key in event.params:
+                new_info = event.params.pop(key)
+                presence_obj.info[key] = new_info
 
     def channel_list(self, command):
         # Build a dict of Connection-to-<name-to-Channel> from this reply.
