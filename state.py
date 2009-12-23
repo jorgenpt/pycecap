@@ -72,11 +72,18 @@ class LocalPresence(object):
     def __repr__(self):
         return 'LocalPresence(%r, %r, <channels=%r, presences=%r>)' % (self.connection, self.info, self.channels, self.presences)
 
-class Presence(object):
-    def __init__(self, local_presence, name, info, old_me=None):
+class LocalPresenceObject(object):
+    def __init__(self, local_presence, name, info):
         self.local_presence = weakref.ref(local_presence)
         self.name = name
         self.info = info
+
+    def reparent(self, new_lp):
+        self.local_presence = weakref.ref(new_lp)
+
+class Presence(LocalPresenceObject):
+    def __init__(self, local_presence, name, info, old_me=None):
+        super(Presence, self).__init__(local_presence, name, info)
 
         if old_me is not None:
             self.channels = old_me.channels
@@ -86,11 +93,9 @@ class Presence(object):
     def __repr__(self):
         return 'Presence(%r, %r, %r, <channels=%r>)' % (self.local_presence().connection, self.name, self.info, self.channels)
 
-class Channel(object):
+class Channel(LocalPresenceObject):
     def __init__(self, presence, name, info, old_me=None):
-        self.local_presence = weakref.ref(presence)
-        self.name = name
-        self.info = info
+        super(Channel, self).__init__(local_presence, name, info)
 
         if old_me is not None:
             self.users = old_me.users

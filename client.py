@@ -147,12 +147,19 @@ class Client(object):
         self.get_network(network).gateways.append(event.params)
 
     def local_presence_list(self, command):
-        # Get a list of new events
+        # Get a list of new presences
         new_presences = {}
         for reply in command.replies:
             if reply.command == reply.MORE:
                 connection = state.Connection(reply.params)
                 new_presences[connection] = state.LocalPresence(connection, reply.params, self.local_presences.get(connection))
+
+        # Update all Channels and Users to refer to the right local_presence
+        for local_presence in new_presences.itervalues():
+            for channel in local_presence.channels:
+                channel.reparent(self)
+            for presence in local_presence.presences:
+                presence.reparent(self)
 
         self.local_presences = new_presences
 
