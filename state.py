@@ -14,12 +14,6 @@
 
 import weakref
 
-def remove_keys(d, keys):
-    keys = set(keys)
-    for k in keys:
-        if k in d:
-            del d[k]
-
 class Network(object):
     def __init__(self, network, info, old_me=None):
         self.network = network
@@ -29,6 +23,9 @@ class Network(object):
             self.gateways = old_me.gateways
         else:
             self.gateways = []
+
+    def __repr__(self):
+        return 'Network(%r, %r, <gateways=%r>)' % (self.network, self.info, self.gateways)
 
 class Connection(object):
     def __init__(self, network_or_dict, mypresence=None):
@@ -47,16 +44,8 @@ class Connection(object):
             return cmp(type(self), type(other))
         return cmp((self.network, self.mypresence), (self.network, other.mypresence))
 
-class Presence(object):
-    def __init__(self, local_presence, name, info, old_me=None):
-        self.local_presence = weakref.ref(local_presence)
-        self.name = name
-        self.info = info
-
-        if old_me is not None:
-            self.channels = old_me.channels
-        else:
-            self.channels = set()
+    def __repr__(self):
+        return 'Connection(%r, %r)' % (self.network, self.mypresence)
 
 class LocalPresence(object):
     def __init__(self, connection, info, old_me=None):
@@ -80,13 +69,33 @@ class LocalPresence(object):
             self.presences[presence] = Presence(self, presence, {})
         return self.presences[presence]
 
+    def __repr__(self):
+        return 'LocalPresence(%r, %r, <channels=%r, presences=%r>)' % (self.connection, self.info, self.channels, self.presences)
+
+class Presence(object):
+    def __init__(self, local_presence, name, info, old_me=None):
+        self.local_presence = weakref.ref(local_presence)
+        self.name = name
+        self.info = info
+
+        if old_me is not None:
+            self.channels = old_me.channels
+        else:
+            self.channels = set()
+
+    def __repr__(self):
+        return 'Presence(%r, %r, %r, <channels=%r>)' % (self.local_presence.connection, self.name, self.info, self.channels)
+
 class Channel(object):
     def __init__(self, presence, name, info, old_me=None):
-        self.name = name
         self.local_presence = weakref.ref(presence)
+        self.name = name
         self.info = info
 
         if old_me is not None:
             self.users = old_me.users
         else:
             self.users = {}
+
+    def __repr__(self):
+        return 'Channel(%r, %r, %r, <users=%r>)' % (self.local_presence.connection, self.name, self.info, self.users)
