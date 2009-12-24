@@ -94,7 +94,7 @@ class Presence(LocalPresenceObject):
         return 'Presence(%r, %r, %r, <channels=%r>)' % (self.local_presence().connection, self.name, self.info, self.channels)
 
 class Channel(LocalPresenceObject):
-    def __init__(self, presence, name, info, old_me=None):
+    def __init__(self, local_presence, name, info, old_me=None):
         super(Channel, self).__init__(local_presence, name, info)
 
         if old_me is not None:

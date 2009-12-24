@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # vim: set fileencoding=utf-8 :
-# 
+#
 # pycecap
 # Copyright (c) 2009 Jørgen Tjernø <jorgenpt@gmail.com>
 #

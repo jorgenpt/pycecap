@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
-import statekeeper
-from sys import stdin
+import pycecap
 
+from sys import stdin
 from pprint import pprint
 
-c = statekeeper.StateKeeper()
+client = pycecap.StateKeeper()
 
 lineno = 0
 for line in stdin:
@@ -19,12 +19,12 @@ for line in stdin:
             continue
 
         if dir == '<':
-            c.parse(message)
+            client.parse(message)
         else:
-            command = statekeeper.protocol.Command(message)
-            c._next_tag = int(command.tag)
-            c.presend(command)
+            command = pycecap.Command(message)
+            client._next_tag = int(command.tag)
+            client.presend(command)
     except:
         print "Crashed on input line %i" % lineno
 
-pprint(c.__dict__)
+pprint(client.__dict__)
