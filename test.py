@@ -4,7 +4,7 @@
 # Very dirty, but quick way of seeing if things are hooked
 # up like they should be.
 
-import client
+import statekeeper
 
 import os
 from pprint import pprint
@@ -35,11 +35,11 @@ def work(c, icecap, replay):
                 return False
             else:
                 try:
-                    command = c.presend(client.protocol.Command(line))
+                    command = c.presend(statekeeper.protocol.Command(line))
                     print >>replay, '>%s' % command
                     print '> %s' % command
                     icecap.stdin.write(str(command) + '\n')
-                except client.protocol.InvalidMessageException:
+                except statekeeper.protocol.InvalidMessageException:
                     print 'Invalid message'
         else:
             print >>replay, '<%s' % line
@@ -49,7 +49,7 @@ def work(c, icecap, replay):
     return True
 
 
-c = client.Client()
+c = statekeeper.StateKeeper()
 icecap = subprocess.Popen(['ssh', 'arach', 'icecapd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 dir_name = os.path.dirname(log_name)

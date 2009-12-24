@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
-import client
+import statekeeper
 from sys import stdin
 
 from pprint import pprint
 
-c = client.Client()
+c = statekeeper.StateKeeper()
 
 lineno = 0
 for line in stdin:
@@ -21,7 +21,7 @@ for line in stdin:
         if dir == '<':
             c.parse(message)
         else:
-            command = client.protocol.Command(message)
+            command = statekeeper.protocol.Command(message)
             c._next_tag = int(command.tag)
             c.presend(command)
     except:

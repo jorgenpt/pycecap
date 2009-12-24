@@ -17,7 +17,7 @@ import state
 
 import sys
 
-class Client(object):
+class StateKeeper(object):
     def __init__(self):
         self.unhandled = (set(), set())
         self._next_tag = 1
