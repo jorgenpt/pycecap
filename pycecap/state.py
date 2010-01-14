@@ -40,7 +40,10 @@ class Network(object):
         return 'Network(%r, %r, <gateways=%r>)' % (self.network, self.info, self.gateways)
 
 class Connection(object):
-    '''This is a (unique) mypresence/network name pair (identifier) representing a connection to a service (e.g. IRC).'''
+    '''This is a (unique) mypresence/network name pair (identifier) representing a connection to a service (e.g. IRC).
+    
+    This is similar to a two-tuple - it hashes and compares properly, so it can be used as a hash key or in a set.
+    '''
 
     def __init__(self, network_or_dict, mypresence=None):
         '''Create a new connection identifier.
@@ -93,11 +96,31 @@ class LocalPresence(object):
             self.presences = {}
 
     def get_channel(self, channel):
+        '''Get a Channel object for the given channel name.
+
+        If a Channel of the given name is known, it's returned. Otherwise,
+        if no Channel is found, it creates a new, empty Channel object and
+        associates it with the given name, then returns this object.
+
+        Args:
+            channel: Name of the channel you want to retrieve.
+        '''
+
         if channel not in self.channels:
             self.channels[channel] = Channel(self, channel, {})
         return self.channels[channel]
 
     def get_presence(self, presence):
+        '''Get a Presence object for the given presence name.
+
+        If a Presence of the given name is known, it's returned. Otherwise,
+        if no Presence is found, it creates a new, empty Presence object and
+        associates it with the given name, then returns this object.
+
+        Args:
+            presence: Name of the presence you want to retrieve.
+        '''
+
         if presence not in self.presences:
             self.presences[presence] = Presence(self, presence, {})
         return self.presences[presence]
@@ -127,6 +150,8 @@ class LocalPresenceObject(object):
         self.info = info
 
     def reparent(self, new_lp):
+        '''Reparent this info blob to belong to a different LocalPresence object.'''
+
         self.local_presence = weakref.ref(new_lp)
 
 class Presence(LocalPresenceObject):
