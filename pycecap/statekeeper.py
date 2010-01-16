@@ -18,7 +18,15 @@ import state
 import sys
 
 class StateKeeper(object):
+    '''A class to keep information about the current state.
+
+    This is typically the class a client would inherit from (or instantiate)
+    to keep a local state about what is known about the remote icecapd.
+    '''
+
     def __init__(self):
+        '''Create a new statekeeper.'''
+
         self.unhandled = (set(), set())
         self._next_tag = 1
 
@@ -54,6 +62,21 @@ class StateKeeper(object):
         self.local_presences = {}
 
     def presend(self, object_or_command, params=None):
+        '''Notify the statekeeper that you're intending to send this.
+
+        This causes the statekeeper to keep this command in it's "commands pending reply"
+        queue, and also to update the command with a unique tag.
+
+        Args:
+            object_or_command: Either a command name or a Command instance.
+            params: Only looked at if object_or_command is a command name - parameters
+                to this command.
+
+        Returns:
+            A Command instance - either the one passed in with updated values, or a new
+            one created from the passed values.
+        '''
+
         if isinstance(object_or_command, basestring):
             command = protocol.Command(str(self._next_tag), object_or_command, params)
         else:
@@ -66,6 +89,14 @@ class StateKeeper(object):
         return command
 
     def parse(self, message):
+        '''Parse a received message.
+
+        This updates the internal state based on the received message.
+
+        Args:
+            message: A string (line) received from the server.
+        '''
+
         if message.startswith('*'):
             event = protocol.Event(message)
             self._events.append(event)
@@ -95,11 +126,23 @@ class StateKeeper(object):
                 del self._pending_commands[reply.tag]
 
     def get_network(self, network):
+        '''Get a Network instance for the given network name.
+
+        This method creates a new Network and stores it with the given name if there
+        is no Network with that name.
+        '''
+
         if network not in self.networks:
             self.networks[network] = state.Network(network, {})
         return self.networks[network]
 
     def get_local_presence(self, connection):
+        '''Get a LocalPresence for the given connection.
+
+        This method creates a new LocalPresence and associates it with the given connection 
+        if none is found.
+        '''
+
         if not isinstance(connection, state.Connection):
             connection = state.Connection(connection)
         if connection not in self.local_presences:
