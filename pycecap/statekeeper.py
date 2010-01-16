@@ -32,7 +32,6 @@ class StateKeeper(object):
 
         self._events = []
         self._pending_commands = {}
-        self._event_handlers = {}
 
         # Default handlers to update self._{gateways,networks,presences,channels}.
         self._reply_handlers = {
@@ -43,7 +42,7 @@ class StateKeeper(object):
             'channel names': self._channel_presence_list,
         }
 
-        self._state_handlers = {
+        self._event_handlers = {
             'network_init': self._network_add,
             'gateway_init': self._gateway_add,
             'local_presence_init': self._local_presence_add,
@@ -101,13 +100,10 @@ class StateKeeper(object):
             event = protocol.Event(message)
             self._events.append(event)
 
-            if event.command in self._state_handlers:
-                self._state_handlers[event.command](event)
-            else:
-                self.unhandled[0].add(event.command)
-
             if event.command in self._event_handlers:
                 self._event_handlers[event.command](event)
+            else:
+                self.unhandled[0].add(event.command)
         else:
             reply = protocol.Reply(message)
 
