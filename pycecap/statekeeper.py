@@ -36,25 +36,25 @@ class StateKeeper(object):
 
         # Default handlers to update self._{gateways,networks,presences,channels}.
         self._reply_handlers = {
-            'network list': self.network_list,
-            'gateway list': self.gateway_list,
-            'presence list': self.local_presence_list,
-            'channel list': self.channel_list,
-            'channel names': self.channel_presence_list,
+            'network list': self._network_list,
+            'gateway list': self._gateway_list,
+            'presence list': self._local_presence_list,
+            'channel list': self._channel_list,
+            'channel names': self._channel_presence_list,
         }
 
         self._state_handlers = {
-            'network_init': self.network_add,
-            'gateway_init': self.gateway_add,
-            'local_presence_init': self.local_presence_add,
-            'local_presence_deinit': self.local_presence_remove,
-            'presence_init': self.presence_add,
-            'presence_deinit': self.presence_remove,
-            'presence_changed': self.presence_changed,
-            'channel_init': self.channel_add,
-            'channel_deinit': self.channel_remove,
-            'channel_presence_added': self.channel_presence_add,
-            'channel_presence_removed': self.channel_presence_remove,
+            'network_init': self._network_add,
+            'gateway_init': self._gateway_add,
+            'local_presence_init': self._local_presence_add,
+            'local_presence_deinit': self._local_presence_remove,
+            'presence_init': self._presence_add,
+            'presence_deinit': self._presence_remove,
+            'presence_changed': self._presence_changed,
+            'channel_init': self._channel_add,
+            'channel_deinit': self._channel_remove,
+            'channel_presence_added': self._channel_presence_add,
+            'channel_presence_removed': self._channel_presence_remove,
         }
 
         # Blank state.
@@ -149,7 +149,7 @@ class StateKeeper(object):
             self.local_presences[connection] = state.LocalPresence(connection, {})
         return self.local_presences[connection]
 
-    def network_list(self, command):
+    def _network_list(self, command):
         # Get a list of new networks from this reply,
         # retaining info from previous definitions (gateways)
         new_networks = {}
@@ -168,12 +168,12 @@ class StateKeeper(object):
         # And instate new networks.
         self.networks = new_networks
 
-    def network_add(self, event):
+    def _network_add(self, event):
         network = event.params.pop('network')
         # Add network - if network already exist, retain gateways associated with it.
         self.networks[network] = state.Network(network, event.params, self.networks.get(network))
 
-    def gateway_list(self, command):
+    def _gateway_list(self, command):
         # Clear list of gateways for all networks, this is a "fresh start"
         for network in self.networks.iterkeys():
             self.networks[network].gateways = []
@@ -184,12 +184,12 @@ class StateKeeper(object):
                 # Add gateway to specified network, create network if needed.
                 self.get_network(network).gateways.append(reply.params)
 
-    def gateway_add(self, event):
+    def _gateway_add(self, event):
         network = event.params.pop('network')
         # Add gateway to specified network, create network if needed.
         self.get_network(network).gateways.append(event.params)
 
-    def local_presence_list(self, command):
+    def _local_presence_list(self, command):
         # Get a list of new presences
         new_presences = {}
         for reply in command.replies:
@@ -206,25 +206,25 @@ class StateKeeper(object):
 
         self.local_presences = new_presences
 
-    def local_presence_add(self, event):
+    def _local_presence_add(self, event):
         # Add a new local presence, overwriting any existing ones (retaining any channels & presences known by it)
         connection = state.Connection(event.params)
         self.local_presences[connection] = state.LocalPresence(connection, event.params, self.local_presences.get(connection))
 
-    def local_presence_remove(self, event):
+    def _local_presence_remove(self, event):
         # Delete the given local presence, if it exists.
         connection = state.Connection(event.params)
         if connection in self.local_presences:
             del self.local_presences[connection]
 
-    def presence_add(self, event):
+    def _presence_add(self, event):
         # Add a new presence, overwriting any existing ones, but retaining any channel membership info.
         local_presence = self.get_local_presence(event.params)
         presence = event.params.pop('presence')
 
         local_presence.presences[presence] = state.Presence(local_presence, presence, event.params, local_presence.presences.get(presence))
 
-    def presence_remove(self, event):
+    def _presence_remove(self, event):
         # Removes a presence, if it's there, and removes all channels that contain it.
         local_presence = self.get_local_presence(event.params)
         presence = event.params.pop('presence')
@@ -236,7 +236,7 @@ class StateKeeper(object):
                 if channel in local_presence.channels:
                     local_presence.channels[channel].pop(presence, None)
 
-    def presence_changed(self, event):
+    def _presence_changed(self, event):
         local_presence = self.get_local_presence(event.params)
         presence = event.params.pop('presence')
         presence_obj = local_presence.get_presence(presence)
@@ -265,7 +265,7 @@ class StateKeeper(object):
                 new_info = event.params.pop(key)
                 presence_obj.info[key] = new_info
 
-    def channel_list(self, command):
+    def _channel_list(self, command):
         # Build a dict of Connection-to-<name-to-Channel> from this reply.
         new_channels = {}
         for reply in command.replies:
@@ -285,13 +285,13 @@ class StateKeeper(object):
             else:
                 presence.channels = {}
 
-    def channel_add(self, event):
+    def _channel_add(self, event):
         # Add a channel, retain any presences in it if it already exists.
         local_presence = self.get_local_presence(event.params)
         channel = event.params.pop('channel')
         local_presence.channels[channel] = state.Channel(local_presence, channel, event.params, local_presence.channels.get(channel))
 
-    def channel_remove(self, event):
+    def _channel_remove(self, event):
         # Remove a channel, if it exists, and remove any presences presnece listed as being in it
         local_presence = self.get_local_presence(event.params)
         channel = event.params.pop('channel')
@@ -303,7 +303,7 @@ class StateKeeper(object):
                 if presence in local_presence.presences:
                     local_presence.presences[presence].channels.pop(channel, None)
 
-    def channel_presence_list(self, command):
+    def _channel_presence_list(self, command):
         # Replace the presencelist for a channel with these new ones.
         local_presence = self.get_local_presence(command.params)
         channel = local_presence.get_channel(command.params.pop('channel'))
@@ -324,7 +324,7 @@ class StateKeeper(object):
         for presence in removed_presences:
             local_presence.get_presence(presence).channels.discard(channel)
 
-    def channel_presence_add(self, event):
+    def _channel_presence_add(self, event):
         # Link a presence to a channel
         local_presence = self.get_local_presence(event.params)
         channel = event.params.pop('channel')
@@ -333,7 +333,7 @@ class StateKeeper(object):
         local_presence.get_channel(channel).presences[presence] = ''
         local_presence.get_presence(presence).channels.add(channel)
 
-    def channel_presence_remove(self, event):
+    def _channel_presence_remove(self, event):
         # Remove a link between a presence and a channel
         local_presence = self.get_local_presence(event.params)
         channel = event.params.pop('channel')
