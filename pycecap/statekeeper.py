@@ -16,12 +16,30 @@ import protocol
 import state
 
 import sys
+import re
+
+NAME_CLEANUP = re.compile('[^a-z_]+')
+def name_cleanup(name):
+    return NAME_CLEANUP.sub('', name.lower().replace(' ', '_'))
 
 class StateKeeper(object):
     '''A class to keep information about the current state.
 
     This is typically the class a client would inherit from (or instantiate)
     to keep a local state about what is known about the remote icecapd.
+
+    A few methods can be implemented in derived classes:
+        * def on_%%s(self, event): Where %%s is an event name, this is called
+            when the given event occurs. (Specialized on_event())
+        * def command_%%s_ok(self, command): Where %%s is a command name, this is 
+            called when the given command succeeds. (Specialized command_ok())
+        * def command_%%s_fail(self, command): Where %%s is a command name, this is 
+            called when the given command fails. (Specialized command_fail())
+        * def command_%%s_more(self, command, reply): Where %%s is a command name, this is 
+            called when the given command gets a new reply. (Specialized command_more())
+
+    A note on %%s in the above lines: Names are lower-cased, spaces replaced with underscores
+    and any non a-z & _ are removed.
     '''
 
     def __init__(self):
@@ -87,6 +105,44 @@ class StateKeeper(object):
 
         return command
 
+    def event(self, event):
+        '''This can be overwritten in derived classes.
+
+        This method is called for *all* events. Return value is ignored.
+
+        Arguments:
+            event: An Event object we've received
+        '''
+
+    def command_ok(self, command):
+        '''This can be overwritten in derived classes.
+
+        This method is called for *all* commands that succeed. Return value is ignored.
+
+        Arguments:
+            command: A Command object that have completed successfully.
+        '''
+
+    def command_fail(self, command):
+        '''This can be overwritten in derived classes.
+
+        This method is called for *all* commands that fail. Return value is ignored.
+
+        Arguments:
+            command: A Command object that has failed.
+        '''
+
+    def command_more(self, command, reply):
+        '''This can be overwritten in derived classes.
+
+        This method is called for *all* replies that aren't indicative of success/failure.
+        Return value is ignored.
+
+        Arguments:
+            command: A Command object that we've received a non-terminating reply for.
+            reply: The new reply we've received (also contained in command)
+        '''
+
     def parse(self, message):
         '''Parse a received message.
 
@@ -104,6 +160,12 @@ class StateKeeper(object):
                 self._event_handlers[event.command](event)
             else:
                 self.unhandled[0].add(event.command)
+
+            handler = getattr(self, 'on_%s' % name_cleanup(event.command), None)
+            if handler:
+                handler(event)
+
+            self.event(event)
         else:
             reply = protocol.Reply(message)
 
@@ -120,6 +182,24 @@ class StateKeeper(object):
                 else:
                     self.unhandled[1].add(command.command)
                 del self._pending_commands[reply.tag]
+
+                handler = getattr(self, 'command_%s_ok' % name_cleanup(command.command), None)
+                if handler:
+                    handler(command)
+
+                self.command_ok(command)
+            elif reply.command == reply.FAIL:
+                handler = getattr(self, 'command_%s_fail' % name_cleanup(command.command), None)
+                if handler:
+                    handler(command)
+
+                self.command_fail(command)
+            elif reply.command == reply.MORE:
+                handler = getattr(self, 'command_%s_more' % name_cleanup(command.command), None)
+                if handler:
+                    handler(command, reply)
+
+                self.command_more(command, reply)
 
     def get_network(self, network):
         '''Get a Network instance for the given network name.
