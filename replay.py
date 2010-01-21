@@ -2,7 +2,7 @@
 
 import pycecap
 
-from sys import stdin
+from sys import stdin, stderr
 from pprint import pprint
 
 client = pycecap.StateKeeper()
@@ -25,6 +25,7 @@ for line in stdin:
             client._next_tag = int(command.tag)
             client.presend(command)
     except:
-        print "Crashed on input line %i" % lineno
+        print >>stderr, "Crashed on input line %i" % lineno
+        raise
 
 pprint(client.__dict__)
