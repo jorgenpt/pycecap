@@ -275,10 +275,10 @@ class StateKeeper(object):
 
         # Update all Channels and Users to refer to the right local_presence
         for local_presence in new_presences.itervalues():
-            for channel in local_presence.channels:
-                channel.reparent(self)
-            for presence in local_presence.presences:
-                presence.reparent(self)
+            for channel in local_presence.channels.itervalues():
+                channel.reparent(local_presence)
+            for presence in local_presence.presences.itervalues():
+                presence.reparent(local_presence)
 
         self.local_presences = new_presences
 
