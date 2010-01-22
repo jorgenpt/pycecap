@@ -38,6 +38,8 @@ class StatefulMessage(object):
     def local_presence(self):
         if 'network' in self._message.params and 'mypresence' in self._message.params:
             return self._state().get_local_presence(self._message.params)
+        elif isinstance(self._message, Reply):
+            return self._message.command.local_presence
         else:
             return None
 
@@ -45,6 +47,8 @@ class StatefulMessage(object):
     def connection(self):
         if 'network' in self._message.params and 'mypresence' in self._message.params:
             return Connection(self._message.params['network'], self._message.params['mypresence'])
+        elif isinstance(self._message, Reply):
+            return self._message.command.connection
         else:
             return None
 
@@ -53,6 +57,8 @@ class StatefulMessage(object):
         local_presence = self.local_presence
         if local_presence and 'channel' in self._message.params:
             return local_presence.get_channel(self._message.params['channel'])
+        elif isinstance(self._message, Reply):
+            return self._message.command.channel
         else:
             return None
 
@@ -61,6 +67,8 @@ class StatefulMessage(object):
         local_presence = self.local_presence
         if local_presence and 'presence' in self._message.params:
             return local_presence.get_presence(self._message.params['presence'])
+        elif isinstance(self._message, Reply):
+            return self._message.command.presence
         else:
             return None
 
