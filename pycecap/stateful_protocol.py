@@ -14,7 +14,8 @@
 
 import weakref
 
-import state 
+from state import Connection
+from protocol import Reply
 
 class StatefulMessage(object):
     '''Wrapper for icecap protocol messages (see protocol.py).
@@ -27,44 +28,43 @@ class StatefulMessage(object):
     '''
 
     def __init__(self, state, message):
-        self.state = weakref.ref(state)
-        self.message = message
+        self._state = weakref.ref(state)
+        self._message = message
 
     def __getattr__(self, name):
-        return getattr(self.message, name)
-
-    def __setattr__(self, name, value):
-        if name in ('state', 'message'): 
-            return object.__setattr__(self, name, value)
-        else:
-            return setattr(self.message, name, value)
+        return getattr(self._message, name)
 
     @property
     def local_presence(self):
-        if 'network' in self.message.params and 'mypresence' in self.message.params:
-            return self.state().get_local_presence(self.message.params)
+        if 'network' in self._message.params and 'mypresence' in self._message.params:
+            return self._state().get_local_presence(self._message.params)
         else:
             return None
 
     @property
     def connection(self):
-        if 'network' in self.message.params and 'mypresence' in self.message.params:
-            return state.Connection(self.message.params['network'], self.message.params['mypresence'])
+        if 'network' in self._message.params and 'mypresence' in self._message.params:
+            return Connection(self._message.params['network'], self._message.params['mypresence'])
         else:
             return None
 
     @property
     def channel(self):
         local_presence = self.local_presence
-        if local_presence and 'channel' in self.message.params:
-            return local_presence.get_channel(self.message.params['channel'])
+        if local_presence and 'channel' in self._message.params:
+            return local_presence.get_channel(self._message.params['channel'])
         else:
             return None
 
     @property
     def presence(self):
         local_presence = self.local_presence
-        if local_presence and 'presence' in self.message.params:
-            return local_presence.get_presence(self.message.params['presence'])
+        if local_presence and 'presence' in self._message.params:
+            return local_presence.get_presence(self._message.params['presence'])
         else:
             return None
+
+    @property
+    def nonstate_params(self):
+        state_keys = ['network', 'mypresence', 'channel', 'presence']
+        return dict(((k, v) for k, v in self._message.params.iteritems() if not k in state_keys))
