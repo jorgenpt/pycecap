@@ -12,7 +12,8 @@
 # IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
-import protocol
+from protocol import Command, Event, Reply
+from stateful_protocol import StatefulMessage
 import state
 
 import sys
@@ -95,7 +96,7 @@ class StateKeeper(object):
         '''
 
         if isinstance(object_or_command, basestring):
-            command = protocol.Command(str(self._next_tag), object_or_command, params)
+            command = StatefulMessage(self, Command(str(self._next_tag), object_or_command, params))
         else:
             command = object_or_command
             command.tag = str(self._next_tag)
@@ -153,7 +154,7 @@ class StateKeeper(object):
         '''
 
         if message.startswith('*'):
-            event = protocol.Event(message)
+            event = StatefulMessage(self, Event(message))
             self._events.append(event)
 
             if event.command in self._event_handlers:
@@ -167,7 +168,7 @@ class StateKeeper(object):
 
             self.event(event)
         else:
-            reply = protocol.Reply(message)
+            reply = StatefulMessage(self, Reply(message))
 
             if not reply.tag in self._pending_commands:
                 print >>sys.stderr, "Got reply for non-pending tag '%s'" % reply.tag
