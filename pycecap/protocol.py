@@ -115,7 +115,7 @@ class Command(Message):
                 a tag. Defines the name of the command we're sending.
             params: A dict of parameters or None if no params / parse from message.
         '''
-        super(Command, self).__init__()
+        Message.__init__(self)
 
         self.replies = []
 
@@ -156,7 +156,7 @@ class Reply(Message):
                 a tag. Defines the status code of the reply (see Reply.STATUS's values for valid ones).
             params: A dict of parameters or None if no params / parse from message.
         '''
-        super(Reply, self).__init__()
+        Message.__init__(self)
 
         if status is None:
             self.parse(message_or_tag)
@@ -184,7 +184,7 @@ class Event(Message):
             message_or_name: Either a string (from the network) we parse or the name of the event.
             params: A dict of parameters or None if message_or_name is a message.
         '''
-        super(Event, self).__init__()
+        Message.__init__(self)
 
         if params is None:
             self.parse(message_or_name)
