@@ -55,8 +55,8 @@ class Connection(object):
         '''
 
         if mypresence is None:
-            self.network = network_or_dict.pop('network')
-            self.mypresence = network_or_dict.pop('mypresence')
+            self.network = network_or_dict['network']
+            self.mypresence = network_or_dict['mypresence']
         else:
             self.network = network_or_dict
             self.mypresence = mypresence
